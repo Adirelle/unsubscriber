@@ -56,7 +56,7 @@ final class WebUnsubscriber implements Unsubscriber
             $response = $this->httpClient->request('GET', $unsubscribeInfo->getLink());
 
             $this->logger->info(sprintf('`%s`: %d', $unsubscribeInfo, $response->getStatusCode()));
-            $this->logger->debug(sprintf('GET %s: `%s`', $unsubscribeInfo->getLink(), trim($response->getContent(false))));
+            $this->logger->debug(sprintf('GET %s: `%s`', $unsubscribeInfo->getLink(), substr(trim($response->getContent(false)), 0, 256)));
         } catch (TransportException $ex) {
             $this->logger->warning(sprintf('error with `%s`: %s', $unsubscribeInfo, $ex->getMessage()));
         }
