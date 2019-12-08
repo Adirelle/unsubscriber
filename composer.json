@@ -40,6 +40,7 @@
         }
     },
     "scripts": {
-        "fix-cs": "sh vendor/bin/php-cs-fixer fix"
+        "fix-cs": "sh vendor/bin/php-cs-fixer fix",
+        "test:php-cs-fixer": "sh vendor/bin/php-cs-fixer fix --dry-run --verbose"
     }
 }
