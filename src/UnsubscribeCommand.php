@@ -85,7 +85,7 @@ final class UnsubscribeCommand extends Command
             new CompositeUnsubcriber([$webUnsubscriber, $mailUnsubscriber])
         );
 
-        $limit = $input->getOption('limit') ?? PHP_INT_MAX;
+        $limit = ((int)$input->getOption('limit')) ?: PHP_INT_MAX;
 
         foreach ($mailbox->getListUnsubscribeHeaders() as $unsubscribeHeader) {
             if ($unsubscriber->supports($unsubscribeHeader)) {

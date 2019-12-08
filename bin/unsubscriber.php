@@ -14,7 +14,7 @@ require_once dirname(__DIR__).'/vendor/autoload.php';
 
 ErrorHandler::register();
 error_reporting(-1);
-set_time_limit(300);
+set_time_limit(0);
 
 $input = new ArgvInput();
 $output = new ConsoleOutput();
