@@ -53,6 +53,7 @@ final class UnsubscribeCommand extends Command
             ->addOption('imapUsername', null, InputArgument::REQUIRED, 'Username to conect to the IMAP server')
             ->addOption('imapPassword', null, InputArgument::REQUIRED, 'Password to conect to the IMAP server')
             ->addOption('smtp', null, InputArgument::REQUIRED, 'DSN of the SMTP server')
+            ->addOption('limit', null, InputArgument::REQUIRED, 'maximum number of unsubscribption to process')
         ;
     }
 
@@ -84,11 +85,12 @@ final class UnsubscribeCommand extends Command
             new CompositeUnsubcriber([$webUnsubscriber, $mailUnsubscriber])
         );
 
-        $i = 10;
+        $limit = $input->getOption('limit') ?? PHP_INT_MAX;
+
         foreach ($mailbox->getListUnsubscribeHeaders() as $unsubscribeHeader) {
             if ($unsubscriber->supports($unsubscribeHeader)) {
                 $unsubscriber->unsubscribe($unsubscribeHeader);
-                if (!$i--) {
+                if (!--$limit) {
                     break;
                 }
             } else {
