@@ -13,6 +13,16 @@ jobs:
     - name: Validate composer.json and composer.lock
       run: composer validate
 
+    - name: Get Composer Cache Directory
+      id: composer-cache
+      run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+    - uses: actions/cache@v1
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: ${{ runner.os }}-composer-
+
     - name: Install required libraries
       run: sudo apt-get update -yqq && sudo apt-get install php-pcov
 
