@@ -6,14 +6,20 @@ namespace App;
 
 use App\Mailbox\IMAPMailbox;
 use App\Unsubscriber\CompositeUnsubcriber;
+use App\Unsubscriber\DedupperUnsubscriber;
+use App\Unsubscriber\MailUnsubscriber;
 use App\Unsubscriber\WebUnsubscriber;
+use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Filesystem\Exception\FileNotFoundException;
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\Mailer\Mailer;
+use Symfony\Component\Mailer\Transport;
 
 /**
  * Class UnsubscribeCommand.
@@ -42,51 +48,111 @@ final class UnsubscribeCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addArgument('imapServer', InputArgument::REQUIRED, 'host of the IMAP server')
-            ->addArgument('imapUser', InputArgument::REQUIRED, 'username to connect to the IMAP server')
-            ->addArgument('imapPassword', InputArgument::REQUIRED, 'password to connect to server')
-            ->addArgument('imapMailbox', InputArgument::OPTIONAL, 'name of the IMAP mailbox', 'INBOX')
-            ->addArgument('imapPort', InputArgument::OPTIONAL, 'port of the IMAP server', 993)
+            ->addOption('config', null, InputArgument::REQUIRED, 'path of a configuration file')
+            ->addOption('imap', null, InputArgument::REQUIRED, 'DSN of the IMAP server')
+            ->addOption('imapUsername', null, InputArgument::REQUIRED, 'Username to conect to the IMAP server')
+            ->addOption('imapPassword', null, InputArgument::REQUIRED, 'Password to conect to the IMAP server')
+            ->addOption('smtp', null, InputArgument::REQUIRED, 'DSN of the SMTP server')
         ;
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->logger->warning('bla');
+        $config = $this->getConfig($input);
 
         $mailbox = new IMAPMailbox(
-            sprintf(
-                '{%s:%s/imap/ssl}%s',
-                (string) $input->getArgument('imapServer'),
-                (int) $input->getArgument('imapPort'),
-                (string) $input->getArgument('imapMailbox'),
-            ),
-            (string) $input->getArgument('imapUser'),
-            (string) $input->getArgument('imapPassword'),
+            $config['imap']['dsn'],
+            $config['imap']['username'],
+            $config['imap']['password'],
             $this->logger
         );
 
-        $webUnsubscriber = new WebUnsubscriber(
-            HttpClient::create(),
-            $this->logger
+        $httpClient = HttpClient::create();
+        if ($httpClient instanceof LoggerAwareInterface) {
+            $httpClient->setLogger($this->logger);
+        }
+
+        $transport = Transport::fromDsn($config['smtp'], null, $httpClient, $this->logger);
+        $mailer = new Mailer($transport);
+
+        $webUnsubscriber = new WebUnsubscriber($httpClient, $this->logger);
+        $mailUnsubscriber = new MailUnsubscriber($mailer, $this->logger);
+        $unsubscriber = new DedupperUnsubscriber(
+            new CompositeUnsubcriber([$webUnsubscriber, $mailUnsubscriber])
         );
-        $unsubscriber = new CompositeUnsubcriber([$webUnsubscriber]);
 
         $i = 10;
         foreach ($mailbox->getListUnsubscribeHeaders() as $unsubscribeHeader) {
             if ($unsubscriber->supports($unsubscribeHeader)) {
                 $unsubscriber->unsubscribe($unsubscribeHeader);
+                if (!$i--) {
+                    break;
+                }
             } else {
                 $this->logger->info(sprintf('Skipping unsupported link: `%s`', $unsubscribeHeader->getLink()));
-            }
-            if (!$i--) {
-                break;
             }
         }
 
         return 0;
+    }
+
+    /**
+     * @param InputInterface $input
+     *
+     * @return array
+     */
+    private function getConfig(InputInterface $input): array
+    {
+        $config = [[
+            'imap' => [
+                'dsn' => false,
+                'username' => false,
+                'password' => false,
+            ],
+            'smtp' => false,
+        ]];
+
+        $configFilePath = $input->getOption('config');
+        if (is_string($configFilePath)) {
+            if (!file_exists($configFilePath)) {
+                throw new FileNotFoundException($configFilePath);
+            }
+            $config[] = $this->readConfigFile($configFilePath);
+        } elseif (file_exists('unsubscriber.json')) {
+            $config[] = $this->readConfigFile('unsubscriber.json');
+        }
+
+        if ($input->getOption('imap')) {
+            $config[] = ['imap' => ['dsn' => (string) $input->getOption('imap')]];
+        }
+
+        if ($input->getOption('imapUsername')) {
+            $config[] = ['imap' => ['username' => (string) $input->getOption('imapUsername')]];
+        }
+
+        if ($input->getOption('imapPassword')) {
+            $config[] = ['imap' => ['password' => (string) $input->getOption('imapPassword')]];
+        }
+
+        if ($input->getOption('smtp')) {
+            $config[] = ['smtp' => (string) $input->getOption('smtp')];
+        }
+
+        return array_replace_recursive(...$config);
+    }
+
+    /**
+     * @param string $path
+     *
+     * @return array
+     */
+    private function readConfigFile(string $path): array
+    {
+        $this->logger->debug("reading configuration from `{$path}`");
+
+        return json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
     }
 }

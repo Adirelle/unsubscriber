@@ -27,5 +27,10 @@ interface UnsubscribeInfo
     /**
      * @return string
      */
+    public function getMessageId(): string;
+
+    /**
+     * @return string
+     */
     public function getDescription(): string;
 }

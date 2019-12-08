@@ -58,14 +58,14 @@ final class IMAPMailbox implements Mailbox
     public function getListUnsubscribeHeaders(): iterable
     {
         $conn = imap_open($this->dsn, $this->username, $this->password, 0, 3);
-        if (false === $conn) {
+        if ($conn === false) {
             throw new IMAPException("could not connect to IMAP server {$this->dsn}: ".imap_last_error());
         }
         $this->logger->info('Connected to IMAP server '.$this->dsn);
 
         try {
             foreach ($this->getMailUIDs($conn) as $mailUID) {
-                $this->logger->debug(sprintf('Handling mail #%d', $mailUID));
+                $this->logger->debug(sprintf('Reading mail #%d', $mailUID));
                 yield from $this->extractMailData($conn, $mailUID);
             }
         } finally {
@@ -101,11 +101,12 @@ final class IMAPMailbox implements Mailbox
 
         $subject = $message->getHeaderValue('Subject');
         $recipient = $message->getHeaderValue('To');
+        $messageId = $message->getHeaderValue('MessageId');
 
         foreach ($message->getAllHeadersByName('List-Unsubscribe') as $header) {
             if (preg_match_all('/<((https?|mailto):[^>]+)>/', $header->getValue(), $links)) {
                 foreach ($links[1] as $link) {
-                    yield new MailUnsubscribeInfo($mailUID, $subject, $recipient, $link);
+                    yield new MailUnsubscribeInfo($mailUID, $subject, $recipient, $link, $messageId);
                 }
             }
         }

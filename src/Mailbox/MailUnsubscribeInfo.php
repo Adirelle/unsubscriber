@@ -27,19 +27,26 @@ final class MailUnsubscribeInfo implements UnsubscribeInfo
     private $recipient;
 
     /**
+     * @var string
+     */
+    private $messageId;
+
+    /**
      * MailUnsubscribeInfo constructor.
      *
      * @param int    $uid
      * @param string $subject
-     * @param string $link
      * @param string $recipient
+     * @param string $link
+     * @param string $messageId
      */
-    public function __construct(int $uid, string $subject, string $recipient, string $link)
+    public function __construct(int $uid, string $subject, string $recipient, string $link, string $messageId)
     {
         $this->uid = $uid;
         $this->subject = $subject;
         $this->recipient = $recipient;
         $this->link = $link;
+        $this->messageId = $messageId;
     }
 
     /**
@@ -72,5 +79,13 @@ final class MailUnsubscribeInfo implements UnsubscribeInfo
     public function getDescription(): string
     {
         return sprintf('#%d: %s', $this->uid, $this->subject);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getMessageId(): string
+    {
+        return $this->messageId;
     }
 }
