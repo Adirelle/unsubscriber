@@ -67,7 +67,7 @@ final class IMAPMailbox implements Mailbox
             foreach ($this->getMailUIDs($conn) as $mailUID) {
                 $this->logger->debug(sprintf('Reading mail #%d', $mailUID));
                 yield from $this->extractMailData($conn, $mailUID);
-                imap_setflag_full($conn, (string)$mailUID, 'Unsubscribed', ST_UID);
+                imap_setflag_full($conn, (string) $mailUID, 'Unsubscribed', ST_UID);
             }
         } finally {
             $this->logger->info('Closing IMAP connection');
