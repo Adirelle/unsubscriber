@@ -7,6 +7,7 @@ namespace App\Unsubscriber;
 use App\Mailbox\UnsubscribeInfo;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 
@@ -68,8 +69,11 @@ final class MailUnsubscriber implements Unsubscriber
         }
         $message->getHeaders()->addTextHeader('Auto-Submitted', 'auto-replied');
 
-        $this->mailer->send($message);
-
-        $this->logger->info(sprintf('unsubscribe mail sent to %s', $parts['path']));
+        try {
+            $this->mailer->send($message);
+            $this->logger->info(sprintf('unsubscribe mail sent to %s', $parts['path']));
+        } catch (TransportException $ex) {
+            $this->logger->warning(sprintf('error with `%s`: %s', $unsubscribeInfo, $ex->getMessage()));
+        }
     }
 }
