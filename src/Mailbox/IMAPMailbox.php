@@ -67,6 +67,7 @@ final class IMAPMailbox implements Mailbox
             foreach ($this->getMailUIDs($conn) as $mailUID) {
                 $this->logger->debug(sprintf('Reading mail #%d', $mailUID));
                 yield from $this->extractMailData($conn, $mailUID);
+                imap_setflag_full($conn, (string)$mailUID, 'Unsubscribed', ST_UID);
             }
         } finally {
             $this->logger->info('Closing IMAP connection');
@@ -81,7 +82,7 @@ final class IMAPMailbox implements Mailbox
      */
     private function getMailUIDs($conn): iterable
     {
-        $messages = imap_search($conn, 'UNDELETED', SE_UID);
+        $messages = imap_search($conn, 'UNDELETED UNKEYWORD "Unsubscribed"', SE_UID);
         $this->logger->notice(sprintf('Found %d mails', count($messages)));
 
         return $messages ?: [];
