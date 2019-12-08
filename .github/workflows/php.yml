@@ -13,6 +13,9 @@ jobs:
     - name: Validate composer.json and composer.lock
       run: composer validate
 
+    - name: Install required libraries
+      run: sudo apt-get update -yqq && sudo apt-get install php-pcov
+
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress --no-suggest
 
