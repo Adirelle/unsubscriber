@@ -6,7 +6,7 @@ namespace App;
 
 use App\Mailbox\IMAPMailbox;
 use App\Unsubscriber\CompositeUnsubcriber;
-use App\Unsubscriber\DedupperUnsubscriber;
+use App\Unsubscriber\DedupFilter;
 use App\Unsubscriber\MailUnsubscriber;
 use App\Unsubscriber\WebUnsubscriber;
 use Psr\Log\LoggerAwareInterface;
@@ -81,7 +81,7 @@ final class UnsubscribeCommand extends Command
 
         $webUnsubscriber = new WebUnsubscriber($httpClient, $this->logger);
         $mailUnsubscriber = new MailUnsubscriber($mailer, $this->logger);
-        $unsubscriber = new DedupperUnsubscriber(
+        $unsubscriber = new DedupFilter(
             new CompositeUnsubcriber([$webUnsubscriber, $mailUnsubscriber])
         );
 

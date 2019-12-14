@@ -1,29 +1,34 @@
-<?php
+<?php declare(strict_types=1);
 
-declare(strict_types=1);
 
 namespace App\Unsubscriber;
 
-use App\Mailbox\UnsubscribeInfo;
 
-final class DedupperUnsubscriber implements Unsubscriber
+use App\Mailbox\UnsubscribeInfo;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+
+abstract class AbstractUnsubscriberDecorator implements Unsubscriber
 {
     /**
      * @var Unsubscriber
      */
     private $inner;
 
-    /** @var string[] */
-    private $seen = [];
+    /**
+     * @var LoggerInterface
+     */
+    protected $logger;
 
     /**
-     * DedupperUnsubscriber constructor.
+     * DedupFilter constructor.
      *
      * @param Unsubscriber $inner
      */
-    public function __construct(Unsubscriber $inner)
+    public function __construct(Unsubscriber $inner, LoggerInterface $logger = null)
     {
         $this->inner = $inner;
+        $this->logger = $logger ?: new NullLogger();
     }
 
     /**
@@ -39,10 +44,6 @@ final class DedupperUnsubscriber implements Unsubscriber
      */
     public function unsubscribe(UnsubscribeInfo $unsubscribeInfo): void
     {
-        if (isset($this->seen[$unsubscribeInfo->getLink()])) {
-            return;
-        }
-        $this->seen[$unsubscribeInfo->getLink()] = true;
         $this->inner->unsubscribe($unsubscribeInfo);
     }
 }
