@@ -7,6 +7,7 @@ namespace App;
 use App\Mailbox\IMAPMailbox;
 use App\Unsubscriber\CompositeUnsubcriber;
 use App\Unsubscriber\DedupFilter;
+use App\Unsubscriber\DNSFilter;
 use App\Unsubscriber\MailUnsubscriber;
 use App\Unsubscriber\WebUnsubscriber;
 use Psr\Log\LoggerAwareInterface;
@@ -82,7 +83,9 @@ final class UnsubscribeCommand extends Command
         $webUnsubscriber = new WebUnsubscriber($httpClient, $this->logger);
         $mailUnsubscriber = new MailUnsubscriber($mailer, $this->logger);
         $unsubscriber = new DedupFilter(
-            new CompositeUnsubcriber([$webUnsubscriber, $mailUnsubscriber])
+            new DNSFilter(
+                new CompositeUnsubcriber([$webUnsubscriber, $mailUnsubscriber])
+            )
         );
 
         $limit = ((int) $input->getOption('limit')) ?: PHP_INT_MAX;
