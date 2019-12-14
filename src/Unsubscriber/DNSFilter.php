@@ -80,7 +80,7 @@ final class DNSFilter extends AbstractUnsubscriberDecorator
      */
     private function checkARecord(string $host)
     {
-        $mxRecords = dns_get_record($host, DNS_A || DNS_AAAA);
+        $mxRecords = dns_get_record($host, DNS_A | DNS_AAAA);
         foreach ($mxRecords as $mxRecord) {
             if ($mxRecord['type'] === 'A' && $mxRecord['ip'] !== '127.0.0.1') {
                 return true;
