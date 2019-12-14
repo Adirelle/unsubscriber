@@ -105,7 +105,11 @@ final class IMAPMailbox implements Mailbox
         $messageId = $message->getHeaderValue('MessageId');
 
         foreach ($message->getAllHeadersByName('List-Unsubscribe') as $header) {
-            if (preg_match_all('/<((https?|mailto):[^>]+)>/', $header->getValue(), $links)) {
+            $value = $header->getValue();
+            if (!$value) {
+                continue;
+            }
+            if (preg_match_all('/<((https?|mailto):[^>]+)>/',   $value, $links)) {
                 foreach ($links[1] as $link) {
                     yield new MailUnsubscribeInfo($mailUID, $subject, $recipient, $link, $messageId);
                 }
