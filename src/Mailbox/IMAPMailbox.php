@@ -1,6 +1,14 @@
 <?php
 
 declare(strict_types=1);
+/*
+ * adirelle/unsubscriber - Scan your mailbox for mails with unsubscribe links and automatically unsubscribe
+ * Copyright (C) 2019 Adirelle
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ */
 
 namespace App\Mailbox;
 
@@ -37,11 +45,6 @@ final class IMAPMailbox implements Mailbox
 
     /**
      * IMAPMailbox constructor.
-     *
-     * @param string               $dsn
-     * @param string               $username
-     * @param string               $password
-     * @param null|LoggerInterface $logger
      */
     public function __construct(string $dsn, string $username = '', string $password = '', LoggerInterface $logger = null)
     {
@@ -58,7 +61,7 @@ final class IMAPMailbox implements Mailbox
     public function getListUnsubscribeHeaders(): iterable
     {
         $conn = imap_open($this->dsn, $this->username, $this->password, 0, 3);
-        if ($conn === false) {
+        if (false === $conn) {
             throw new IMAPException("could not connect to IMAP server {$this->dsn}: ".imap_last_error());
         }
         $this->logger->info('Connected to IMAP server '.$this->dsn);
@@ -77,22 +80,17 @@ final class IMAPMailbox implements Mailbox
 
     /**
      * @param resource $conn
-     *
-     * @return iterable
      */
     private function getMailUIDs($conn): iterable
     {
         $messages = imap_search($conn, 'UNDELETED UNKEYWORD "Unsubscribed"', SE_UID);
-        $this->logger->notice(sprintf('Found %d mails', count($messages)));
+        $this->logger->notice(sprintf('Found %d mails', \count($messages)));
 
         return $messages ?: [];
     }
 
     /**
      * @param $conn
-     * @param int $mailUID
-     *
-     * @return iterable
      */
     private function extractMailData($conn, int $mailUID): iterable
     {
@@ -109,7 +107,7 @@ final class IMAPMailbox implements Mailbox
             if (!$value) {
                 continue;
             }
-            if (preg_match_all('/<((https?|mailto):[^>]+)>/',   $value, $links)) {
+            if (preg_match_all('/<((https?|mailto):[^>]+)>/', $value, $links)) {
                 foreach ($links[1] as $link) {
                     yield new MailUnsubscribeInfo($mailUID, $subject, $recipient, $link, $messageId);
                 }

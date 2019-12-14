@@ -24,8 +24,7 @@
     "require-dev": {
         "ext-pcov": "*",
         "roave/security-advisories": "dev-master",
-        "irstea/php-cs-fixer-config": "^1.0",
-        "irstea/php-cs-fixer-shim":"^2.15",
+        "irstea/php-cs-fixer-config": "^2.0",
         "phpunit/phpunit": "^8.5",
         "symfony/var-dumper": "^5.0"
     },

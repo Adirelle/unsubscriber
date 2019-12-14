@@ -10,7 +10,7 @@ use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\ErrorHandler\ErrorHandler;
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
+require_once \dirname(__DIR__).'/vendor/autoload.php';
 
 ErrorHandler::register();
 error_reporting(-1);

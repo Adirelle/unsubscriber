@@ -1,6 +1,14 @@
 <?php
 
 declare(strict_types=1);
+/*
+ * adirelle/unsubscriber - Scan your mailbox for mails with unsubscribe links and automatically unsubscribe
+ * Copyright (C) 2019 Adirelle
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ */
 
 namespace App\Mailbox;
 
@@ -33,12 +41,6 @@ final class MailUnsubscribeInfo implements UnsubscribeInfo
 
     /**
      * MailUnsubscribeInfo constructor.
-     *
-     * @param int    $uid
-     * @param string $subject
-     * @param string $recipient
-     * @param string $link
-     * @param string $messageId
      */
     public function __construct(int $uid, string $subject, string $recipient, string $link, string $messageId)
     {

@@ -1,6 +1,14 @@
 <?php
 
 declare(strict_types=1);
+/*
+ * adirelle/unsubscriber - Scan your mailbox for mails with unsubscribe links and automatically unsubscribe
+ * Copyright (C) 2019 Adirelle
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ */
 
 namespace App;
 
@@ -34,8 +42,6 @@ final class UnsubscribeCommand extends Command
 
     /**
      * UnsubscribeCommand constructor.
-     *
-     * @param null|LoggerInterface $logger
      */
     public function __construct(?LoggerInterface $logger)
     {
@@ -107,11 +113,6 @@ final class UnsubscribeCommand extends Command
         return 0;
     }
 
-    /**
-     * @param InputInterface $input
-     *
-     * @return array
-     */
     private function getConfig(InputInterface $input): array
     {
         $config = [[
@@ -124,7 +125,7 @@ final class UnsubscribeCommand extends Command
         ]];
 
         $configFilePath = $input->getOption('config');
-        if (is_string($configFilePath)) {
+        if (\is_string($configFilePath)) {
             if (!file_exists($configFilePath)) {
                 throw new FileNotFoundException($configFilePath);
             }
@@ -152,11 +153,6 @@ final class UnsubscribeCommand extends Command
         return array_replace_recursive(...$config);
     }
 
-    /**
-     * @param string $path
-     *
-     * @return array
-     */
     private function readConfigFile(string $path): array
     {
         $this->logger->debug("reading configuration from `{$path}`");
