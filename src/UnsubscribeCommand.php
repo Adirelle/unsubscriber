@@ -84,8 +84,10 @@ final class UnsubscribeCommand extends Command
         $mailUnsubscriber = new MailUnsubscriber($mailer, $this->logger);
         $unsubscriber = new DedupFilter(
             new DNSFilter(
-                new CompositeUnsubcriber([$webUnsubscriber, $mailUnsubscriber])
-            )
+                new CompositeUnsubcriber([$webUnsubscriber, $mailUnsubscriber]),
+                $this->logger
+            ),
+            $this->logger
         );
 
         $limit = ((int) $input->getOption('limit')) ?: PHP_INT_MAX;
