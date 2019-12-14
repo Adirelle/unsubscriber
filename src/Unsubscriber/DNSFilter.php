@@ -25,18 +25,19 @@ final class DNSFilter extends AbstractUnsubscriberDecorator
         $scheme = parse_url($link, PHP_URL_SCHEME);
 
         if (!$host) {
+            $this->logger->info("ignoring malformed link: `$link`");
             return;
         }
 
         switch ($scheme) {
             case 'mailto':
-                if (!$this->checkMXRecord($host)) {
+                if (!$this->checkMailDomain($host)) {
                     $this->logger->info("ignoring email with no valid MX record: `$host`");
                     return;
                 }
                 break;
             case 'http':case 'https':
-                if (!$this->checkARecord($host)) {
+                if (!$this->checkIpAddress($host)) {
                     $this->logger->info("ignoring webserver with no valid A record: `$host`");
                     return;
                 }
@@ -49,12 +50,12 @@ final class DNSFilter extends AbstractUnsubscriberDecorator
     }
 
     /**
-     * Check that the mail domain has a MX record.
+     * Check that the mail domain has MX record(s).
      *
      * @param string $mail
      * @return bool
      */
-    private function checkMXRecord(string $mail): bool
+    private function checkMailDomain(string $mail): bool
     {
         [, $domain] = explode('@', $mail, 2);
         if (!$domain) {
@@ -62,34 +63,20 @@ final class DNSFilter extends AbstractUnsubscriberDecorator
             return false;
         }
 
-        $mxRecords = dns_get_record($domain, DNS_MX);
-        foreach ($mxRecords as $mxRecord) {
-            if ($mxRecord['type'] === 'MX') {
-                return true;
-            }
-        }
-
-        return false;
+        $this->logger->debug("Looking for MX records of `$domain`");
+        return checkdnsrr($domain, 'MX');
     }
 
     /**
-     * Check that the given host has an IP address, which is different from "localhost".
+     * Check that the given host has a valid IP address.
      *
      * @param string $host
      * @return bool
      */
-    private function checkARecord(string $host)
+    private function checkIpAddress(string $host)
     {
-        $mxRecords = dns_get_record($host, DNS_A | DNS_AAAA);
-        foreach ($mxRecords as $mxRecord) {
-            if ($mxRecord['type'] === 'A' && $mxRecord['ip'] !== '127.0.0.1') {
-                return true;
-            }
-            if ($mxRecord['type'] === 'AAAA' && $mxRecord['ip'] !== '::1') {
-                return true;
-            }
-        }
-
-        return false;
+        $this->logger->debug("Looking for A records of `$host`");
+        $ipv4 = gethostbyname($host);
+        return $ipv4 !== $host && $ipv4 !== '127.0.0.1';
     }
 }
