@@ -92,6 +92,7 @@ final class UnsubscribeCommand extends Command
 
         foreach ($mailbox->getListUnsubscribeHeaders() as $unsubscribeHeader) {
             if ($unsubscriber->supports($unsubscribeHeader)) {
+                $this->logger->debug(sprintf('Processing `%s`', $unsubscribeHeader->getLink()));
                 $unsubscriber->unsubscribe($unsubscribeHeader);
                 if (!--$limit) {
                     break;
